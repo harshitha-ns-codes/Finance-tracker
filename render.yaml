@@ -1,24 +1,20 @@
 # =============================================================================
-# Render Blueprint — Finbrain Backend + PostgreSQL
+# Render Blueprint — Finbrain Backend (Neon PostgreSQL)
 # Location: render.yaml (repository root)
 #
-# Deploy: Connect this repo on Render → New Blueprint → select render.yaml
-# Docs:   https://render.com/docs/blueprint-spec
+# Database: Neon PostgreSQL (external — set credentials in Render dashboard)
+# Deploy:   Render → New Blueprint → select render.yaml
 # =============================================================================
 
 services:
-  # ---------------------------------------------------------------------------
-  # Spring Boot API (Docker)
-  # ---------------------------------------------------------------------------
   - type: web
     name: finbrain-api
     runtime: docker
-    region: oregon
+    region: Singapore
     plan: free
     branch: main
     autoDeploy: true
 
-    # Build context is the backend/ directory where Dockerfile lives
     dockerfilePath: ./backend/Dockerfile
     dockerContext: ./backend
 
@@ -28,78 +24,25 @@ services:
       - key: SPRING_PROFILES_ACTIVE
         value: prod
 
-      - key: JAVA_OPTS
-        value: "-XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Djava.security.egd=file:/dev/./urandom"
-
-      # Render injects PORT automatically — Spring Boot reads server.port=${PORT}
       - key: PORT
         value: 8080
 
-      # Generate a cryptographically random JWT secret on first deploy
       - key: JWT_SECRET
         generateValue: true
 
-      - key: JWT_EXPIRATION_MS
-        value: "86400000"
+      # Neon PostgreSQL — copy from Neon dashboard (Connection Details → JDBC)
+      - key: DATABASE_URL
+        sync: false
 
-      # Frontend URL for CORS (set to your Vercel URL after frontend deploy)
+      - key: DATABASE_USERNAME
+        sync: false
+
+      - key: DATABASE_PASSWORD
+        sync: false
+
+      # Vercel frontend URL — set after frontend deploy
       - key: FRONTEND_URL
         sync: false
 
       - key: CORS_ALLOWED_ORIGINS
         sync: false
-
-      # PostgreSQL connection — populated from linked database below
-      - key: DATABASE_HOST
-        fromDatabase:
-          name: finbrain-db
-          property: host
-
-      - key: DATABASE_PORT
-        fromDatabase:
-          name: finbrain-db
-          property: port
-
-      - key: DATABASE_NAME
-        fromDatabase:
-          name: finbrain-db
-          property: database
-
-      - key: DATABASE_USER
-        fromDatabase:
-          name: finbrain-db
-          property: user
-
-      - key: DATABASE_PASSWORD
-        fromDatabase:
-          name: finbrain-db
-          property: password
-
-      # Optional: override with explicit JDBC URL if needed
-      # - key: SPRING_DATASOURCE_URL
-      #   sync: false
-
-      # Optional mail (not used by current codebase — reserved for future)
-      - key: MAIL_USERNAME
-        sync: false
-
-      - key: MAIL_PASSWORD
-        sync: false
-
-      # Optional cloud storage (not used by current codebase — reserved for future)
-      - key: CLOUDINARY_CLOUD_NAME
-        sync: false
-
-      - key: CLOUDINARY_API_KEY
-        sync: false
-
-      - key: CLOUDINARY_API_SECRET
-        sync: false
-
-databases:
-  - name: finbrain-db
-    plan: free
-    region: oregon
-    databaseName: finbrain
-    user: finbrain
-    ipAllowList: []
