@@ -1,0 +1,72 @@
+/* Finbrain — Maroon & Beige theme */
+:root {
+  /* Base surfaces */
+  --bg-base: #f4ede4;
+  --bg-elevated: #faf6f0;
+  --bg-card: #fffcf8;
+  --bg-card-hover: #fff9f3;
+  --bg-input: #fffbf7;
+  --bg-nav: rgba(255, 251, 247, 0.92);
+  --bg-overlay: rgba(44, 24, 16, 0.45);
+
+  /* Maroon scale */
+  --maroon-950: #2c1218;
+  --maroon-900: #3d1219;
+  --maroon-800: #5c1824;
+  --maroon-700: #722f37;
+  --maroon-600: #8b2942;
+  --maroon-500: #a03250;
+  --maroon-400: #b84d68;
+
+  /* Gold / tan accents */
+  --gold-600: #9a7b4f;
+  --gold-500: #c4a574;
+  --gold-400: #d4b896;
+  --gold-300: #e8d5b5;
+  --beige-400: #e0d4c4;
+  --beige-300: #ebe3d6;
+
+  /* Text */
+  --text-primary: #2c1810;
+  --text-secondary: #5c4a42;
+  --text-muted: #8b7b72;
+  --text-on-primary: #fffbf7;
+  --text-on-maroon: #fff8f2;
+
+  /* Semantic */
+  --color-positive: #2d6a4f;
+  --color-negative: #9b2c2c;
+  --color-warning: #b8860b;
+  --color-info: var(--maroon-600);
+
+  /* Borders & shadows */
+  --border-subtle: rgba(114, 47, 55, 0.1);
+  --border-default: rgba(114, 47, 55, 0.18);
+  --border-strong: rgba(114, 47, 55, 0.28);
+  --shadow-sm: 0 4px 16px rgba(60, 24, 16, 0.06);
+  --shadow-md: 0 12px 40px rgba(60, 24, 16, 0.08);
+  --shadow-lg: 0 20px 50px rgba(60, 24, 16, 0.1);
+
+  /* Surfaces (tinted) */
+  --surface-subtle: rgba(114, 47, 55, 0.04);
+  --surface-muted: rgba(114, 47, 55, 0.07);
+  --surface-maroon: rgba(114, 47, 55, 0.1);
+  --surface-gold: rgba(196, 165, 116, 0.15);
+  --surface-positive: rgba(45, 106, 79, 0.1);
+  --surface-negative: rgba(155, 44, 44, 0.1);
+  --surface-warning: rgba(184, 134, 11, 0.12);
+
+  /* Focus */
+  --focus-ring: rgba(114, 47, 55, 0.35);
+
+  /* Radius */
+  --radius-sm: 0.55rem;
+  --radius-md: 0.75rem;
+  --radius-lg: 1rem;
+  --radius-pill: 999px;
+
+  /* Gradients */
+  --gradient-primary: linear-gradient(135deg, var(--maroon-700), var(--maroon-600));
+  --gradient-hero: linear-gradient(160deg, var(--bg-base) 0%, var(--beige-300) 100%);
+  --gradient-card: linear-gradient(145deg, var(--bg-card) 0%, var(--bg-elevated) 100%);
+}

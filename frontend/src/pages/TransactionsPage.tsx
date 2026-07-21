@@ -1,13 +1,18 @@
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import {
   Transaction,
   TransactionRequest,
   TransactionType,
   createTransaction,
   deleteTransaction,
+  exportTransactionsCsv,
   listTransactions,
   updateTransaction
 } from "../api";
+import { BUDGET_CATEGORIES } from "../categories";
+import { RegretPendingReviews } from "../components/RegretPendingReviews";
+import { RegretStatsSection } from "../components/RegretStatsSection";
+import { BillSplitsTab } from "../components/BillSplitsTab";
 
 const emptyForm: TransactionRequest = {
   amount: 0,
@@ -17,13 +22,27 @@ const emptyForm: TransactionRequest = {
   date: new Date().toISOString().slice(0, 10)
 };
 
+function currentMonth(): string {
+  const now = new Date();
+  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+}
+
+type HistoryFilter = TransactionType;
+type PageTab = "transactions" | "splits";
+
 export function TransactionsPage() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<Transaction | null>(null);
   const [form, setForm] = useState<TransactionRequest>(emptyForm);
+  const [useCustomCategory, setUseCustomCategory] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [historyFilter, setHistoryFilter] = useState<HistoryFilter>("EXPENSE");
+  const [exportMonth, setExportMonth] = useState(currentMonth);
+  const [exporting, setExporting] = useState(false);
+  const [regretStatsKey, setRegretStatsKey] = useState(0);
+  const [pageTab, setPageTab] = useState<PageTab>("transactions");
 
   const load = async () => {
     setLoading(true);
@@ -42,6 +61,11 @@ export function TransactionsPage() {
     void load();
   }, []);
 
+  const filteredTransactions = useMemo(
+    () => transactions.filter(tx => tx.type === historyFilter),
+    [transactions, historyFilter]
+  );
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -52,6 +76,7 @@ export function TransactionsPage() {
       } else {
         await createTransaction(form);
       }
+      setHistoryFilter(form.type);
       setForm(emptyForm);
       setEditing(null);
       await load();
@@ -64,6 +89,7 @@ export function TransactionsPage() {
 
   const startEdit = (tx: Transaction) => {
     setEditing(tx);
+    setUseCustomCategory(!BUDGET_CATEGORIES.includes(tx.category as any));
     setForm({
       amount: tx.amount,
       type: tx.type,
@@ -93,9 +119,82 @@ export function TransactionsPage() {
     }
   };
 
+  const handleExport = async (all = false) => {
+    setExporting(true);
+    setError(null);
+    try {
+      const { blob, filename } = await exportTransactionsCsv(all ? undefined : exportMonth);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename || "transactions.csv";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      setError(err.message || "Failed to export CSV");
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="page">
-      <h1>Transactions</h1>
+      <div className="budget-page-header">
+        <h1>Transactions</h1>
+        {pageTab === "transactions" && (
+          <div className="export-bar">
+            <label className="month-select">
+              Export month
+              <input
+                type="month"
+                value={exportMonth}
+                onChange={e => setExportMonth(e.target.value)}
+              />
+            </label>
+            <button
+              type="button"
+              className="btn-secondary"
+              disabled={exporting}
+              onClick={() => handleExport(false)}
+            >
+              {exporting ? "Exporting..." : "Export CSV"}
+            </button>
+            <button
+              type="button"
+              className="btn-secondary"
+              disabled={exporting}
+              onClick={() => handleExport(true)}
+            >
+              Export all
+            </button>
+          </div>
+        )}
+      </div>
+
+      <div className="page-main-tabs">
+        <button
+          type="button"
+          className={pageTab === "transactions" ? "page-main-tab active" : "page-main-tab"}
+          onClick={() => setPageTab("transactions")}
+        >
+          Transactions
+        </button>
+        <button
+          type="button"
+          className={pageTab === "splits" ? "page-main-tab active" : "page-main-tab"}
+          onClick={() => setPageTab("splits")}
+        >
+          Splits
+        </button>
+      </div>
+
+      {pageTab === "splits" ? (
+        <BillSplitsTab />
+      ) : (
+        <>
+      <RegretPendingReviews onReviewed={() => setRegretStatsKey(k => k + 1)} />
 
       <div className="grid-2">
         <div className="card">
@@ -123,12 +222,46 @@ export function TransactionsPage() {
             </label>
             <label>
               Category
-              <input
+              <select
                 value={form.category}
                 onChange={e => handleChange("category", e.target.value)}
-                required
-              />
+                required={!useCustomCategory}
+                disabled={useCustomCategory}
+              >
+                <option value="">Select category</option>
+                {BUDGET_CATEGORIES.map(cat => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
             </label>
+            <label className="check-row">
+              <input
+                type="checkbox"
+                checked={useCustomCategory}
+                onChange={e => {
+                  const checked = e.target.checked;
+                  setUseCustomCategory(checked);
+                  setForm(prev => ({
+                    ...prev,
+                    category: checked ? prev.category : ""
+                  }));
+                }}
+              />{" "}
+              Use custom category
+            </label>
+            {useCustomCategory && (
+              <label>
+                Custom category
+                <input
+                  value={form.category}
+                  onChange={e => handleChange("category", e.target.value)}
+                  placeholder={form.type === "INCOME" ? "e.g. Salary, Freelance" : "e.g. Rent, Medicine"}
+                  required
+                />
+              </label>
+            )}
             <label>
               Description
               <input
@@ -156,6 +289,7 @@ export function TransactionsPage() {
                   className="btn-secondary"
                   onClick={() => {
                     setEditing(null);
+                    setUseCustomCategory(false);
                     setForm(emptyForm);
                   }}
                 >
@@ -167,27 +301,45 @@ export function TransactionsPage() {
         </div>
 
         <div className="card">
-          <h2>History</h2>
+          <div className="history-header">
+            <h2>History</h2>
+            <div className="tabs">
+              <button
+                type="button"
+                className={historyFilter === "INCOME" ? "tab active" : "tab"}
+                onClick={() => setHistoryFilter("INCOME")}
+              >
+                Income
+              </button>
+              <button
+                type="button"
+                className={historyFilter === "EXPENSE" ? "tab active" : "tab"}
+                onClick={() => setHistoryFilter("EXPENSE")}
+              >
+                Expense
+              </button>
+            </div>
+          </div>
           {loading ? (
             <p>Loading...</p>
-          ) : transactions.length === 0 ? (
-            <p>No transactions yet.</p>
+          ) : filteredTransactions.length === 0 ? (
+            <p>
+              No {historyFilter === "INCOME" ? "income" : "expense"} transactions yet.
+            </p>
           ) : (
             <table className="table">
               <thead>
                 <tr>
                   <th>Date</th>
-                  <th>Type</th>
                   <th>Category</th>
                   <th>Amount</th>
                   <th></th>
                 </tr>
               </thead>
               <tbody>
-                {transactions.map(tx => (
+                {filteredTransactions.map(tx => (
                   <tr key={tx.id}>
                     <td>{tx.date}</td>
-                    <td>{tx.type}</td>
                     <td>{tx.category}</td>
                     <td className={tx.type === "INCOME" ? "text-green" : "text-red"}>
                       {tx.type === "INCOME" ? "+" : "-"}₹{tx.amount.toFixed(2)}
@@ -213,7 +365,10 @@ export function TransactionsPage() {
           )}
         </div>
       </div>
+
+      <RegretStatsSection key={regretStatsKey} />
+        </>
+      )}
     </div>
   );
 }
-

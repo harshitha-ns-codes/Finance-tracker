@@ -11,22 +11,36 @@ export function TopNav() {
     navigate("/login");
   };
 
-  const isActive = (path: string) => (location.pathname === path ? "active" : "");
+  const isActive = (paths: string | string[]) => {
+    const list = Array.isArray(paths) ? paths : [paths];
+    return list.includes(location.pathname) ? "active" : "";
+  };
 
   return (
     <header className="top-nav">
       <div className="top-nav-left">
-        <span className="brand">AI Finance Tracker</span>
+        <Link to="/" className="brand">
+          Finbrain
+        </Link>
         {authed && (
           <nav className="nav-links">
             <Link className={isActive("/")} to="/">
-              Dashboard
+              Home
             </Link>
             <Link className={isActive("/transactions")} to="/transactions">
               Transactions
             </Link>
-            <Link className={isActive("/budget")} to="/budget">
-              Budget
+            <Link className={isActive(["/plan", "/budget"])} to="/plan">
+              Plan
+            </Link>
+            <Link className={isActive("/forecast")} to="/forecast">
+              Forecast
+            </Link>
+            <Link className={isActive(["/advisor", "/health"])} to="/advisor">
+              Advisor
+            </Link>
+            <Link className={isActive("/profile")} to="/profile">
+              Profile
             </Link>
           </nav>
         )}
@@ -45,4 +59,3 @@ export function TopNav() {
     </header>
   );
 }
-

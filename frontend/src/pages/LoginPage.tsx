@@ -33,11 +33,12 @@ export function LoginPage() {
   return (
     <div className="centered-card">
       <div className="card auth-card">
+        <p className="brand-login">Finbrain</p>
         <h1>{mode === "login" ? "Welcome back" : "Create your account"}</h1>
         <p className="subtitle">
           {mode === "login"
-            ? "Sign in to track your spending and income."
-            : "Sign up to start managing your personal finances."}
+            ? "Sign in to your financial brain."
+            : "Sign up to plan, track, and get advice in one place."}
         </p>
         <div className="tabs">
           <button
@@ -60,6 +61,10 @@ export function LoginPage() {
               value={username}
               onChange={e => setUsername(e.target.value)}
               required
+              spellCheck={false}
+              autoCorrect="off"
+              autoCapitalize="off"
+              autoComplete="username"
             />
           </label>
           {mode === "register" && (
@@ -70,6 +75,8 @@ export function LoginPage() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 required
+                spellCheck={false}
+                autoComplete="email"
               />
             </label>
           )}
@@ -81,6 +88,7 @@ export function LoginPage() {
               onChange={e => setPassword(e.target.value)}
               required
               minLength={6}
+              autoComplete={mode === "login" ? "current-password" : "new-password"}
             />
           </label>
           {error && <div className="error">{error}</div>}

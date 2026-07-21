@@ -1,0 +1,61 @@
+# =============================================================================
+# Finbrain API — Docker build context exclusions
+# Location: backend/.dockerignore
+# Reduces build context size and prevents secrets from entering the image.
+# =============================================================================
+
+# Maven build output (rebuilt inside the container)
+target/
+
+# Version control
+.git/
+.gitignore
+.github/
+
+# IDE and editor files
+.idea/
+.vscode/
+*.iml
+.settings/
+.project
+.classpath
+*.swp
+*.swo
+*~
+
+# Local database files (H2 dev data — never ship to production)
+data/
+
+# Logs
+logs/
+*.log
+
+# Environment and secrets — NEVER copy into Docker images
+.env
+.env.*
+!.env.example
+
+# Frontend (not part of backend build context)
+../frontend/
+node_modules/
+
+# OS artifacts
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Documentation (not needed at runtime)
+README.md
+*.md
+DEPLOYMENT.md
+
+# Test reports and coverage
+surefire-reports/
+test-output/
+coverage/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.bak

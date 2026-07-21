@@ -1,226 +1,262 @@
-## AI-Assisted Personal Finance Tracker (Backend)
+# Finbrain
 
-This is a Spring Boot backend for an AI-assisted personal finance tracker.  
-It provides secure REST APIs to manage:
+**Finbrain** is a full-stack personal finance platform that helps users track spending, plan budgets, forecast cash flow, and make smarter purchase decisions — with AI-powered advisory insights.
 
-- **User accounts**: register & login with JWT-based authentication
-- **Transactions**: income & expenses with amount, category, date, and description
-- **Budgets**: monthly spending limits with budget alerts
-- **Analytics**: dashboard totals, top spending category, and anomaly detection for unusual transactions
-
-### Tech Stack
-
-- **Java 17**
-- **Spring Boot 3**
-- **Spring Security + JWT**
-- **Spring Data JPA**
-- **H2 in-memory database** (for development)
+Built with Spring Boot and React, designed for production deployment on **Render** (backend) and **Vercel** (frontend).
 
 ---
 
-### Running the Backend
+## Features
 
-1. **Prerequisites**
-   - Java 17 installed
-   - Maven installed and on your `PATH` (or run from IntelliJ as a Spring Boot app)
-
-2. **From the project root** (`finance-tracker` folder):
-
-   ```bash
-   mvn spring-boot:run
-   ```
-
-3. The server starts on **`http://localhost:8080`**.
-
-4. Optional: H2 console is enabled at `http://localhost:8080/h2-console`  
-   - JDBC URL: `jdbc:h2:mem:financedb`
-   - User: `sa`
-   - Password: (empty)
-
-#### Windows quick setup (PowerShell)
-
-If `mvn` is not recognized, install Java + Maven via `winget`:
-
-```powershell
-winget install Microsoft.OpenJDK.17
-winget install Apache.Maven
-```
-
-Then open a new terminal and run:
-
-```powershell
-cd "C:\Users\ADMIN\Desktop\jp"
-mvn spring-boot:run
-```
+- JWT authentication (register / login)
+- Transaction tracking with CSV export
+- Monthly budgets with category-level spent tracking
+- Dashboard analytics, trends, and anomaly detection
+- Cash flow forecasting
+- Financial health score and purchase advisor
+- Bill splits, regret tracker, streaks, net worth, and savings goals
 
 ---
 
-### Authentication & Security
+## Architecture
 
-- JWT-based auth with `Spring Security`.
-- Public endpoints:
-  - `POST /api/auth/register`
-  - `POST /api/auth/login`
-- All other `/api/**` endpoints require an `Authorization: Bearer <token>` header.
-
-#### Register
-
-`POST /api/auth/register`
-
-```json
-{
-  "username": "alice",
-  "email": "alice@example.com",
-  "password": "secret123"
-}
+```
+┌─────────────────┐         HTTPS          ┌──────────────────────┐
+│  Vercel (SPA)   │ ─────────────────────► │  Render (Spring Boot) │
+│  React + Vite   │    VITE_API_BASE_URL   │  REST API + JWT       │
+└─────────────────┘                        └──────────┬───────────┘
+                                                      │
+                                                      ▼
+                                           ┌──────────────────────┐
+                                           │  PostgreSQL (Render)  │
+                                           └──────────────────────┘
 ```
 
-**Response**
+| Layer | Technology | Deploy target |
+|-------|-----------|---------------|
+| Frontend | React 18, TypeScript, Vite, Axios, Recharts | Vercel |
+| Backend | Spring Boot 3.3, Spring Security, JPA | Render (Docker) |
+| Database | H2 (dev), PostgreSQL (prod) | Render PostgreSQL |
+| Auth | JWT (HS256), BCrypt passwords | — |
 
-```json
-{
-  "token": "<JWT_TOKEN>"
-}
+---
+
+## Tech Stack
+
+**Backend:** Java 17 · Spring Boot 3 · Spring Security · Spring Data JPA · PostgreSQL · H2 · JJWT · Bean Validation · Spring Actuator
+
+**Frontend:** React 18 · TypeScript · Vite · React Router 6 · Axios · Recharts
+
+**DevOps:** Docker · GitHub Actions · Render Blueprint · Vercel
+
+---
+
+## Folder Structure
+
 ```
-
-#### Login
-
-`POST /api/auth/login`
-
-```json
-{
-  "username": "alice",
-  "password": "secret123"
-}
-```
-
-**Response**
-
-```json
-{
-  "token": "<JWT_TOKEN>"
-}
-```
-
-Use this token in subsequent requests:
-
-```http
-Authorization: Bearer <JWT_TOKEN>
+Finance-tracker/
+├── backend/                  # Spring Boot API
+│   ├── src/main/java/        # Application source
+│   ├── src/main/resources/   # application.properties + profiles
+│   ├── Dockerfile            # Production multi-stage build
+│   ├── .dockerignore
+│   └── .env.example
+├── frontend/                 # React SPA
+│   ├── src/                  # Components, pages, API client
+│   ├── vercel.json           # Vercel SPA + cache headers
+│   └── .env.example
+├── .github/workflows/        # CI pipelines
+├── render.yaml               # Render Blueprint (API + PostgreSQL)
+├── DEPLOYMENT.md             # Step-by-step deploy guide
+├── PROJECT_REVIEW.md         # Deployment audit findings
+└── README.md
 ```
 
 ---
 
-### Transactions APIs
+## Prerequisites
 
-Base path: `/api/transactions`
-
-- **Create transaction**
-
-  `POST /api/transactions`
-
-  ```json
-  {
-    "amount": 1200.00,
-    "type": "INCOME",   // or "EXPENSE"
-    "category": "Salary",
-    "description": "Monthly pay",
-    "date": "2026-03-01"
-  }
-  ```
-
-- **List transactions**
-
-  `GET /api/transactions`
-
-  Optional filters:
-
-  - `GET /api/transactions?from=2026-03-01&to=2026-03-31`
-
-- **Update transaction**
-
-  `PUT /api/transactions/{id}`
-
-- **Delete transaction**
-
-  `DELETE /api/transactions/{id}`
-
-Transactions are always scoped to the **currently authenticated user**.
+| Tool | Version |
+|------|---------|
+| Java JDK | 17+ |
+| Node.js | 18+ (20 recommended) |
+| npm | 9+ |
+| Docker | 24+ (optional, for container builds) |
+| Git | 2+ |
 
 ---
 
-### Budget APIs
+## Local Setup
 
-Base path: `/api/budgets`
+### 1. Clone the repository
 
-- **Create/update monthly budget**
+```bash
+git clone https://github.com/your-org/finance-tracker.git
+cd finance-tracker
+```
 
-  `POST /api/budgets`
+### 2. Backend
 
-  ```json
-  {
-    "month": "2026-03",      // Year-Month (yyyy-MM)
-    "monthlyLimit": 1500.00
-  }
-  ```
+```bash
+cd backend
+cp .env.example .env          # optional — dev defaults work out of the box
+./mvnw spring-boot:run        # Windows: .\mvnw.cmd spring-boot:run
+```
 
-- **Get budget for a month**
+- API: http://localhost:8081
+- Health: http://localhost:8081/actuator/health
+- H2 Console (dev only): http://localhost:8081/h2-console
 
-  `GET /api/budgets/{month}`
+### 3. Frontend
 
-  Example:
+```bash
+cd frontend
+cp .env.example .env.local
+npm install
+npm run dev
+```
 
-  - `GET /api/budgets/2026-03`
-
----
-
-### Analytics & Dashboard
-
-Base path: `/api/analytics`
-
-- **Dashboard summary**
-
-  `GET /api/analytics/dashboard`
-
-  Example response:
-
-  ```json
-  {
-    "totalIncome": 4000.00,
-    "totalExpenses": 2400.00,
-    "balance": 1600.00,
-    "topSpendingCategory": "Food",
-    "topSpendingAmount": 600.00,
-    "monthlyBudgetLimit": 1500.00,
-    "monthlyExpenses": 1300.00,
-    "nearBudgetLimit": true
-  }
-  ```
-
-- **Anomaly detection**
-
-  `GET /api/analytics/anomalies`
-
-  Detects unusually large expense transactions relative to your average expenses.
-
-  Example response:
-
-  ```json
-  [
-    {
-      "transactionId": 42,
-      "amount": 900.00,
-      "category": "Electronics",
-      "date": "2026-03-10",
-      "reason": "Unusually large expense vs average"
-    }
-  ]
-  ```
+- App: http://localhost:5174
+- API calls proxy to `localhost:8081` via Vite
 
 ---
 
-### Notes & Next Steps
+## Environment Variables
 
-- This backend uses an in-memory H2 DB for simplicity; in a real deployment you would switch to PostgreSQL/MySQL and configure credentials.
-- The JWT secret in `application.yml` should be replaced with a long, random secret and stored securely (e.g. environment variable). This project accepts either a raw secret string or a BASE64-encoded secret.
-- You can now build a frontend (web/mobile) that connects to these APIs for a full personal finance experience.
+See [`backend/.env.example`](backend/.env.example) and [`frontend/.env.example`](frontend/.env.example).
 
+**Backend (production):**
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `SPRING_PROFILES_ACTIVE` | Yes | `prod` |
+| `JWT_SECRET` | Yes | 32+ char random secret |
+| `DATABASE_HOST/PORT/NAME/USER/PASSWORD` | Yes | PostgreSQL (auto-set by Render) |
+| `CORS_ALLOWED_ORIGINS` | Yes | Your Vercel URL |
+| `PORT` | Auto | Injected by Render |
+
+**Frontend (production):**
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `VITE_API_BASE_URL` | Yes | e.g. `https://finbrain-api.onrender.com/api` |
+| `VITE_APP_NAME` | No | Display name (default: Finbrain) |
+
+---
+
+## Building
+
+### Backend JAR
+
+```bash
+cd backend
+./mvnw clean package -DskipTests
+# Output: backend/target/finance-tracker-0.0.1-SNAPSHOT.jar
+```
+
+### Frontend static bundle
+
+```bash
+cd frontend
+npm run build
+# Output: frontend/dist/
+```
+
+---
+
+## Docker
+
+Build and run the backend container locally:
+
+```bash
+cd backend
+docker build -t finbrain-api .
+
+docker run -p 8081:8081 \
+  -e SPRING_PROFILES_ACTIVE=dev \
+  -e JWT_SECRET=local-dev-secret-at-least-32-characters \
+  -e PORT=8081 \
+  finbrain-api
+```
+
+Health check: http://localhost:8081/actuator/health
+
+---
+
+## Deployment
+
+Full guides:
+
+- **[DEPLOYMENT.md](DEPLOYMENT.md)** — step-by-step Render + Vercel instructions
+- **[PROJECT_REVIEW.md](PROJECT_REVIEW.md)** — audit findings and known limitations
+- **[render.yaml](render.yaml)** — one-click Render Blueprint
+
+**Quick summary:**
+
+1. Push to GitHub
+2. Render → New Blueprint → select `render.yaml`
+3. Set `CORS_ALLOWED_ORIGINS` and `FRONTEND_URL` to your Vercel URL
+4. Vercel → Import repo → root directory `frontend`
+5. Set `VITE_API_BASE_URL=https://your-api.onrender.com/api`
+
+---
+
+## CI/CD
+
+GitHub Actions run on every push and pull request to `main` / `develop`:
+
+| Workflow | What it does |
+|----------|-------------|
+| `backend-ci.yml` | `./mvnw clean test package` + Docker build |
+| `frontend-ci.yml` | `npm ci` → `tsc --noEmit` → `vite build` |
+
+---
+
+## Troubleshooting
+
+| Problem | Solution |
+|---------|----------|
+| CORS errors in browser | Set `CORS_ALLOWED_ORIGINS` on Render to exact Vercel URL |
+| 401 on all requests | Verify `JWT_SECRET` is set; log in again after deploy |
+| DB connection failed | Check PostgreSQL is linked; verify `DATABASE_*` env vars |
+| Blank page on refresh (Vercel) | Ensure `vercel.json` is in `frontend/` root |
+| API calls wrong URL | Set `VITE_API_BASE_URL` on Vercel and redeploy |
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for the full troubleshooting section.
+
+---
+
+## Security
+
+- Never commit secrets — use Render/Vercel env vars or GitHub Secrets
+- JWT secret: `openssl rand -base64 64`
+- H2 console disabled in production
+- Non-root Docker user
+- CORS restricted to known frontend origins (no wildcards)
+- Frontend exposes only `VITE_*` public variables
+
+See [DEPLOYMENT.md — Security](DEPLOYMENT.md#security) for GitHub Secrets setup.
+
+---
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/my-feature`)
+3. Commit changes (`git commit -m 'Add my feature'`)
+4. Push to the branch (`git push origin feature/my-feature`)
+5. Open a Pull Request
+
+Ensure CI passes before requesting review.
+
+---
+
+## License
+
+This project is provided as-is for educational and portfolio purposes. Add an open-source license (e.g. MIT) before public distribution.
+
+---
+
+## Author
+
+Built as a portfolio-grade full-stack finance application demonstrating production deployment practices, JWT security, and modern React architecture.

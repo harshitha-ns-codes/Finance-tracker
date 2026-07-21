@@ -1,0 +1,20 @@
+# Backend (Maven / H2)
+backend/target/
+backend/data/
+
+# Frontend
+frontend/dist/
+frontend/node_modules/
+
+# IDE / OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Env / secrets (keep .env.example files)
+.env
+.env.local
+.env.*.local
+*.log
