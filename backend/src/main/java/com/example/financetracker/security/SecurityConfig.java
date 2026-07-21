@@ -53,8 +53,7 @@ public class SecurityConfig {
                 )
                 .exceptionHandling(ex -> ex.authenticationEntryPoint(jsonAuthEntryPoint))
                 .authorizeHttpRequests(auth -> {
-                    auth.requestMatchers(HttpMethod.POST, "/api/auth/**").permitAll();
-                    auth.requestMatchers("/", "/api/health", "/actuator/health", "/actuator/info").permitAll();
+                    auth.requestMatchers(PublicSecurityPaths.PERMIT_ALL).permitAll();
                     auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
                     if (h2ConsoleEnabled) {
                         auth.requestMatchers("/h2-console/**").permitAll();
