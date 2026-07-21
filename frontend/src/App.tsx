@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { Suspense, lazy, useEffect, useState } from "react";
 import { getToken } from "./auth";
 import { TopNav } from "./components/TopNav";
@@ -57,9 +57,19 @@ function PageLoader() {
   return <div className="page">Loading...</div>;
 }
 
+function shouldShowSplash(): boolean {
+  if (hasSeenSplash()) return false;
+  if (typeof window !== "undefined" && window.location.pathname === "/login") {
+    return false;
+  }
+  return true;
+}
+
 export default function App() {
-  const [showSplash, setShowSplash] = useState(() => !hasSeenSplash());
+  const [showSplash, setShowSplash] = useState(() => shouldShowSplash());
   const navigate = useNavigate();
+  const location = useLocation();
+  const isLoginPage = location.pathname === "/login";
 
   useEffect(() => {
     if (!showSplash) return;
@@ -79,7 +89,7 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <TopNav />
+      {!isLoginPage && <TopNav />}
       <main className="app-main">
         <Suspense fallback={<PageLoader />}>
           <Routes>

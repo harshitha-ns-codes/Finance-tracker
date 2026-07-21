@@ -1,5 +1,6 @@
 import { clearToken } from "./auth";
 import {
+  ApiError,
   apiClient,
   handleUnauthorized,
   isAxiosError,
@@ -8,16 +9,47 @@ import {
   toAxiosConfig
 } from "./api/client";
 
-async function publicRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+async function publicRequest<T>(
+  path: string,
+  options: RequestInit = {},
+  errorOptions: { authRequest?: boolean } = {}
+): Promise<T> {
   try {
     const config = toAxiosConfig(options);
     const res = await publicClient.request<T>({ url: path, ...config });
     return res.data;
   } catch (error) {
     if (isAxiosError(error)) {
-      throw new Error(readAxiosError(error));
+      throw readAxiosError(error, errorOptions);
     }
     throw error;
+  }
+}
+
+function assertAuthToken(data: unknown): { token: string } {
+  if (
+    data &&
+    typeof data === "object" &&
+    "token" in data &&
+    typeof (data as { token: unknown }).token === "string" &&
+    (data as { token: string }).token.length > 0
+  ) {
+    return data as { token: string };
+  }
+
+  throw new ApiError(
+    import.meta.env.PROD
+      ? "Sign-in succeeded but no token was returned. Check VITE_API_BASE_URL points to the API, not the frontend."
+      : "Sign-in succeeded but no token was returned. Is the backend running?"
+  );
+}
+
+export async function checkApiReachable(): Promise<boolean> {
+  try {
+    await publicClient.get("/health", { timeout: 8_000 });
+    return true;
+  } catch {
+    return false;
   }
 }
 
@@ -44,7 +76,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
       if (error.response?.status === 401 && redirectOnAuthError) {
         handleUnauthorized();
       }
-      throw new Error(readAxiosError(error));
+      throw readAxiosError(error);
     }
     throw error;
   }
@@ -52,18 +84,35 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
 
 export async function login(username: string, password: string) {
   clearToken();
-  return publicRequest<{ token: string }>("/auth/login", {
-    method: "POST",
-    body: JSON.stringify({ username, password })
-  });
+  const data = await publicRequest<{ token: string }>(
+    "/auth/login",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        username: username.trim(),
+        password
+      })
+    },
+    { authRequest: true }
+  );
+  return assertAuthToken(data);
 }
 
 export async function register(username: string, email: string, password: string) {
   clearToken();
-  return publicRequest<{ token: string }>("/auth/register", {
-    method: "POST",
-    body: JSON.stringify({ username, email, password })
-  });
+  const data = await publicRequest<{ token: string }>(
+    "/auth/register",
+    {
+      method: "POST",
+      body: JSON.stringify({
+        username: username.trim(),
+        email: email.trim(),
+        password
+      })
+    },
+    { authRequest: true }
+  );
+  return assertAuthToken(data);
 }
 
 export type TransactionType = "INCOME" | "EXPENSE";
@@ -280,7 +329,7 @@ export async function exportTransactionsCsv(month?: string): Promise<{ blob: Blo
       if (error.response?.status === 401 || error.response?.status === 403) {
         handleUnauthorized();
       }
-      throw new Error(readAxiosError(error));
+      throw readAxiosError(error);
     }
     throw error;
   }
@@ -388,7 +437,7 @@ export async function getBudget(month: string): Promise<Budget | null> {
       if (error.response?.status === 401 || error.response?.status === 403) {
         handleUnauthorized();
       }
-      throw new Error(readAxiosError(error));
+      throw readAxiosError(error);
     }
     throw error;
   }

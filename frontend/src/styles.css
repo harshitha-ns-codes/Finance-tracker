@@ -513,6 +513,13 @@ textarea:focus {
   border: 1px solid rgba(155, 44, 44, 0.2);
 }
 
+.field-error {
+  display: block;
+  margin-top: 0.25rem;
+  color: var(--color-negative);
+  font-size: 0.75rem;
+}
+
 .form-actions {
   display: flex;
   gap: 0.5rem;
