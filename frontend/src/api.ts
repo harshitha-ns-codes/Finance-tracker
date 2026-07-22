@@ -45,11 +45,42 @@ function assertAuthToken(data: unknown): { token: string } {
 }
 
 export async function checkApiReachable(): Promise<boolean> {
+  const result = await checkApiHealth();
+  return result.ok;
+}
+
+export type ApiHealthResult = {
+  ok: boolean;
+  url: string;
+  detail?: string;
+};
+
+export async function checkApiHealth(): Promise<ApiHealthResult> {
+  const url = `${publicClient.defaults.baseURL ?? "/api"}/health`;
+
   try {
-    await publicClient.get("/health", { timeout: 8_000 });
-    return true;
-  } catch {
-    return false;
+    const timeout = import.meta.env.PROD ? 90_000 : 8_000;
+    await publicClient.get("/health", { timeout });
+    return { ok: true, url };
+  } catch (error) {
+    let detail = "Unknown error";
+
+    if (isAxiosError(error)) {
+      if (error.code === "ERR_NETWORK" || error.message === "Network Error") {
+        detail =
+          "Network blocked (CORS) or backend is down. On Render free tier, first request can take 60s.";
+      } else if (error.response?.status) {
+        detail = `HTTP ${error.response.status}`;
+      } else if (error.code === "ECONNABORTED") {
+        detail = "Timed out — Render may be waking up (wait 60s and retry).";
+      } else {
+        detail = error.message;
+      }
+    } else if (error instanceof Error) {
+      detail = error.message;
+    }
+
+    return { ok: false, url, detail };
   }
 }
 

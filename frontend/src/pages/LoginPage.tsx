@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
-import { checkApiReachable, login, register } from "../api";
-import { ApiError } from "../api/client";
+import { checkApiHealth, login, register } from "../api";
+import { API_BASE_URL, ApiError } from "../api/client";
 import { setToken } from "../auth";
 import { useNavigate } from "react-router-dom";
 
@@ -13,14 +13,18 @@ export function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [apiUnreachable, setApiUnreachable] = useState(false);
+  const [apiDiag, setApiDiag] = useState<{ url: string; detail?: string } | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     let cancelled = false;
 
-    checkApiReachable().then(ok => {
+    checkApiHealth().then(result => {
       if (!cancelled) {
-        setApiUnreachable(!ok);
+        setApiUnreachable(!result.ok);
+        if (!result.ok) {
+          setApiDiag({ url: result.url, detail: result.detail });
+        }
       }
     });
 
@@ -77,10 +81,26 @@ export function LoginPage() {
 
         {apiUnreachable && (
           <div className="error" role="alert">
-            Cannot reach the API server.
-            {import.meta.env.PROD
-              ? " Set VITE_API_BASE_URL in Vercel to your Render backend (e.g. https://your-api.onrender.com/api)."
-              : " Start the backend: cd backend && .\\mvnw.cmd spring-boot:run"}
+            <strong>Cannot reach the API server.</strong>
+            <p style={{ margin: "0.5rem 0 0" }}>
+              Calling: <code>{apiDiag?.url ?? `${API_BASE_URL}/health`}</code>
+            </p>
+            {apiDiag?.detail && (
+              <p style={{ margin: "0.35rem 0 0" }}>Reason: {apiDiag.detail}</p>
+            )}
+            {import.meta.env.PROD ? (
+              <p style={{ margin: "0.5rem 0 0" }}>
+                Fix checklist: (1) Render backend must be <strong>Live</strong> — open{" "}
+                <code>https://finance-tracker-evut.onrender.com/api/health</code> in a new tab;
+                (2) On Vercel set <code>VITE_API_BASE_URL=/api</code> (proxy) or your full Render
+                URL + <code>/api</code>; (3) redeploy Vercel after env changes; (4) on Render set{" "}
+                <code>CORS_ALLOWED_ORIGINS</code> to your Vercel URL if not using the proxy.
+              </p>
+            ) : (
+              <p style={{ margin: "0.5rem 0 0" }}>
+                Start the backend: <code>cd backend &amp;&amp; .\mvnw.cmd spring-boot:run</code>
+              </p>
+            )}
           </div>
         )}
 

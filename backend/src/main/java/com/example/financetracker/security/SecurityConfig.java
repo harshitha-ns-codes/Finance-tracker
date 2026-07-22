@@ -95,9 +95,25 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
+
+        // Exact origins: Vite localhost + values from CORS_ALLOWED_ORIGINS / FRONTEND_URL
         configuration.setAllowedOrigins(corsProperties.getAllowedOrigins());
+
+        // Patterns cover Vite any port + all Vercel production/preview URLs
+        configuration.setAllowedOriginPatterns(java.util.List.of(
+                "http://localhost:*",
+                "http://127.0.0.1:*",
+                "https://*.vercel.app"
+        ));
+
         configuration.setAllowedMethods(java.util.List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(java.util.List.of("Authorization", "Content-Type", "Accept", "X-Requested-With"));
+        configuration.setAllowedHeaders(java.util.List.of(
+                "Authorization",
+                "Content-Type",
+                "Accept",
+                "X-Requested-With",
+                "Origin"
+        ));
         configuration.setExposedHeaders(java.util.List.of("Content-Disposition"));
         configuration.setAllowCredentials(false);
         configuration.setMaxAge(3600L);

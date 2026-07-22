@@ -22,10 +22,13 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 5174,
       strictPort: true,
+      // Allow browser tools / other local origins during Vite dev
+      cors: true,
       proxy: {
         "/api": {
           target: apiProxyTarget,
-          changeOrigin: true
+          changeOrigin: true,
+          secure: false
         }
       }
     }

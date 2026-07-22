@@ -40,7 +40,8 @@ services:
       - key: DATABASE_PASSWORD
         sync: false
 
-      # Vercel frontend URL — set after frontend deploy
+      # Paste your current Vercel URL in Render dashboard (no trailing slash)
+      # e.g. https://YOUR-APP.vercel.app
       - key: FRONTEND_URL
         sync: false
 
