@@ -91,7 +91,7 @@ export function LoginPage() {
             {import.meta.env.PROD ? (
               <p style={{ margin: "0.5rem 0 0" }}>
                 Fix checklist: (1) Render backend must be <strong>Live</strong> — open{" "}
-                <code>https://finance-tracker-evut.onrender.com/api/health</code> in a new tab;
+                <code>https://finbrain-64cw.onrender.com/api/health</code> in a new tab;
                 (2) On Vercel set <code>VITE_API_BASE_URL=/api</code> (proxy) or your full Render
                 URL + <code>/api</code>; (3) redeploy Vercel after env changes; (4) on Render set{" "}
                 <code>CORS_ALLOWED_ORIGINS</code> to your Vercel URL if not using the proxy.

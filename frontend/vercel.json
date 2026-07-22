@@ -7,7 +7,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://finance-tracker-evut.onrender.com/api/:path*"
+      "destination": "https://finbrain-64cw.onrender.com/api/:path*"
     },
     {
       "source": "/(.*)",
